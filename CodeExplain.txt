@@ -1,0 +1,54 @@
+GIẢI THÍCH CHƯƠNG TRÌNH MÔ PHỎNG HỆ THỐNG OFDM - Ghép Kênh Phân Chia Tần Số Trực Giao 
+SỬ DỤNG BỘ LỌC LMMSE TRÊN KÊNH TRUYỀN RAYLEIGH NHIỄU TRẮNG, ĐIỀU CHẾ 64 QAM
+ĐÁNH GIÁ CHẤT LƯỢNG BER/SER
+- OFDM là kỹ thuật điều chế đa sóng mang (Carrier Wave), chia luồng dữ liệu tốc độ cao thành nhiều luồng nhỏ hơn
+truyền đồng thời trên nhiều sóng mang con tần số gần nhau nhưng trực giao (không giao thoa) để tăng tốc độ truyền và hiệu quả
+truyền dữ liệu, được ứng dụng rộng rãi trong WiFi, 4G, 5G,...
+- Nguyên lý hoạt động: 
+	- Chia kênh: Một kênh băng rộng được chia thành nhiều kênh con hẹp, mỗi kênh con truyền 1 phần dữ liệu 
+	- Trực giao: Các sóng mang con này được thiết kế sao cho chúng không gây nhiễu cho nhau, giúp tiết kiệm băng thông
+	- Truyền song song: Dữ liệu được truyền đồng thời trên các sóng mang con này, mỗi sóng con có tốc độ thấp hơn, giúp tăng cường khả năng chịu lỗi và hiệu suất
+	- Giảm thiều nhiễu: Nhờ chia nhỏ sóng và truyền song song, OFDM giảm thiểu các vấn đề như fading chọn lọc và nhiễu đa đường
+===================================================================================================================================
+Bit ngẫu nhiên
+↓ 
+64-QAM → OFDM (IFFT + CP)
+↓ 
+kênh Rayleigh đa đường (quasi-static)
+↓ 
+AWGN
+↓ 
+thu OFDM (bỏ CP + FFT)
+↓  
+cân bằng LMMSE
+↓ 
+giải điều chế
+↓ 
+tính BER/SER theo SNR bằng phương pháp Monte-Carlo
+
+===================================================================================================================================
+KHÁI NIỆM - ĐỊNH NGHĨA
+
+1. Cyclic Prefix - CP (Tiền tố tuần hoàn) là một kỹ thuật quan trọng trong hệ thống không dây 
+- Nói 1 cách dễ hiểu, CP là việc bạn lấy một đoạn dữ liệu ở phần cuối của mỗi ký hiệu (symbol) và sao chép rồi dán vào phần đầu của chính ký hiệu đó.
+- Cách thức hoạt động: 
+	- Giả sử bạn có 1 symbol dữ liệu dài N mẫu. Để tạo ra CP, bạn chọn ra L mẫu cuối cùng và đưa chúng lên trước 
+		+ Symbol gốc: [A,B,C,D,E,F]
+		+ Đoạn copy (giả sử L=2): [E,F]
+		+ Symbol sau khi thêm CP: [E,F,A,B,C,D,E,F]
+	- Ký hiệu mới lúc này sẽ có độ dài là N + L. Tại máy thu, đoạn CP này thường sẽ bị loại bỏ sau khi đã thực hiện xong các bước đồng bộ 
+- CP giải quyết 2 vấn đề sống còn của truyền dẫn đa đường: 
+	- Loại bỏ tín hiệu xuyên ký tự (ISI - Inter Symbol Interface): Trong thực tế, tín hiệu truyền từ trạm phát đến điện thoại của bạn không chỉ đi 
+		một đường thẳng mà còn phản xạ qua các tòa nhà, tán cây. Điều này khiến các Symbol đến máy thu vào các thời điểm khác nhau và đè nhau. 
+		Nó đóng vai trò như 1 khoảng bảo vệ (Guard Interval) để các Symbol không bị "dính" vào nhau
+	- Duy trì tính trực giao: Đây là phần kỹ thuật hơn một chút. CP biến phép chập tuyến tính của kênh truyền thành chập vòng
+		Điều này giúp máy thu có thể sử dụng phép toán FFT để tách các sóng mang con mà không bị nhiễu lẫn nhau (tránh ICI)
+- Nhược điểm: 
+	- Lãng phí tài nguyên: Vì CP chỉ là bản sao của dữ liệu cũ, nó không mang thêm thông tin mới những vẫn tiêu tốn công suất phát và thời gian truyền dẫn.
+	- Nếu CP quá ngắn, nó không chặn được nhiễu ISI. Nếu quá dài, nó gây lãng phí băng thông. Trong 4G/5G, độ dài CP thường được thiết kế để lớn hơn độ trễ tối đa của kênh truyền
+
+# Trong mô hình OFDM của mô phỏng, sau FFT, mỗi subcarrier tuân theo: Y(k)=H(k)X(k)+W(k). Có 3 trường hợp 
+	- (A) Có LMMSE: Giảm nhiễu khi kênh suy hao sâu, BER/SER tốt nhất trong 3 trường hợp
+	- (B) Có ZF (Zero Forcing): X^_ZF​(k) = H(k)/Y(k)​ Khử méo kênh hoàn toàn. Khi H(k) nhỏ -> Khuếch đại nhiễu
+	- (C) Không có bộ lọc (No Equazition): Symbol bị méo cả biên độ + pha do kênh -> BER/SER rất tệ, đặc biệt với Rayleigh
+		Nghĩa là Sau FFT, đưa thẳng Y(k) vào bộ giải điều chế QAM, không chia cho H(k), không bù kênh
