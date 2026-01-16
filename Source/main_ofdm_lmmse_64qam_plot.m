@@ -72,9 +72,10 @@ function main_ofdm_lmmse_64qam_plot()
 
     %% ----------------- FIGURE 1: LMMSE (BER & SER) ----------------
     figure(Name="LMMSE Only");
-    hold on; grid on;
+    grid on;
 
     semilogy(cfg.SNRdB_vec, ber_lmmse, 'o-', 'LineWidth', 1.8);
+    hold on; 
     semilogy(cfg.SNRdB_vec, ser_lmmse, 's-', 'LineWidth', 1.8);
     
     ylim([1e-3 1]);
@@ -85,14 +86,17 @@ function main_ofdm_lmmse_64qam_plot()
 
     %% ----------------- FIGURE 2: SO SANH LMMSE & NONE (BER & SER) ----------------
     figure(Name="BER & SER comparison");
-    hold on; grid on;
+    grid on;
 
     % BER 
     semilogy(cfg.SNRdB_vec, ber_none, 'o--', 'LineWidth', 1.8);
+    hold on;
     semilogy(cfg.SNRdB_vec, ber_lmmse, 'o-',  'LineWidth', 1.8);
-
+    hold on;
+    
     % SER
     semilogy(cfg.SNRdB_vec, ser_none, 's--',  'LineWidth', 1.8);
+    hold on;
     semilogy(cfg.SNRdB_vec, ser_lmmse, 's-',  'LineWidth', 1.8);
 
     ylim([1e-3 1]);

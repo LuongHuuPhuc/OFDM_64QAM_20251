@@ -1,5 +1,5 @@
 % Vai tro
-%   - Mo phong nhieu trang Gauss phuc 
+%   - Mo phong nhieu trang (tuan theo phan bo Gauss phuc) 
 % Input
 %   - x: Chuỗi tín hiệu (thường là sau kênh), miền thời gian 
 %   - N0: Phương sai nhiễu

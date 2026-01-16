@@ -11,6 +11,8 @@
 
 function [rxTime, h] = rayleigh_multipath_channel(txTime, Lch)
     % Sinh tap Rayleigh (chuẩn hoá năng lượng kênh)
+    % Gaussian phuc (randn(Lch, 1) + 1i*randn(Lch, 1)
+    % Chia sqrt(2 * Lch) de chuan hoa de tong nang luong kenh xap xi 1
     h = (randn(Lch, 1) + 1i*randn(Lch, 1)) / sqrt(2 * Lch);
 
     % Lọc toàn bộ chuỗi thời gian (tích chập tuyến tính)

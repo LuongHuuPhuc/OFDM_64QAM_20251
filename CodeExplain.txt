@@ -10,6 +10,7 @@ truyền dữ liệu, được ứng dụng rộng rãi trong WiFi, 4G, 5G,...
 	- Truyền song song: Dữ liệu được truyền đồng thời trên các sóng mang con này, mỗi sóng con có tốc độ thấp hơn, giúp tăng cường khả năng chịu lỗi và hiệu suất
 	- Giảm thiều nhiễu: Nhờ chia nhỏ sóng và truyền song song, OFDM giảm thiểu các vấn đề như fading chọn lọc và nhiễu đa đường
 ===================================================================================================================================
+FLOW CHUẨN 
 Bit ngẫu nhiên
 ↓ 
 64-QAM → OFDM (IFFT + CP)
@@ -29,7 +30,7 @@ tính BER/SER theo SNR bằng phương pháp Monte-Carlo
 ===================================================================================================================================
 KHÁI NIỆM - ĐỊNH NGHĨA
 
-1. Cyclic Prefix - CP (Tiền tố tuần hoàn) là một kỹ thuật quan trọng trong hệ thống không dây 
+1. Cyclic Prefix - CP (Tiền tố tuần hoàn - Dải bảo vệ) là một kỹ thuật quan trọng trong hệ thống không dây 
 - Nói 1 cách dễ hiểu, CP là việc bạn lấy một đoạn dữ liệu ở phần cuối của mỗi ký hiệu (symbol) và sao chép rồi dán vào phần đầu của chính ký hiệu đó.
 - Cách thức hoạt động: 
 	- Giả sử bạn có 1 symbol dữ liệu dài N mẫu. Để tạo ra CP, bạn chọn ra L mẫu cuối cùng và đưa chúng lên trước 
@@ -42,13 +43,82 @@ KHÁI NIỆM - ĐỊNH NGHĨA
 		một đường thẳng mà còn phản xạ qua các tòa nhà, tán cây. Điều này khiến các Symbol đến máy thu vào các thời điểm khác nhau và đè nhau. 
 		Nó đóng vai trò như 1 khoảng bảo vệ (Guard Interval) để các Symbol không bị "dính" vào nhau
 	- Duy trì tính trực giao: Đây là phần kỹ thuật hơn một chút. CP biến phép chập tuyến tính của kênh truyền thành chập vòng
-		Điều này giúp máy thu có thể sử dụng phép toán FFT để tách các sóng mang con mà không bị nhiễu lẫn nhau (tránh ICI)
+		Điều này giúp máy thu có thể sử dụng phép toán FFT để tách các sóng mang con mà không bị nhiễu lẫn nhau (tránh ISI)
 - Nhược điểm: 
 	- Lãng phí tài nguyên: Vì CP chỉ là bản sao của dữ liệu cũ, nó không mang thêm thông tin mới những vẫn tiêu tốn công suất phát và thời gian truyền dẫn.
-	- Nếu CP quá ngắn, nó không chặn được nhiễu ISI. Nếu quá dài, nó gây lãng phí băng thông. Trong 4G/5G, độ dài CP thường được thiết kế để lớn hơn độ trễ tối đa của kênh truyền
+	- Nếu CP quá ngắn, nó không chặn được nhiễu ISI. Nếu quá dài, nó gây lãng phí băng thông. Trong 4G/5G, độ dài CP thường được thiết kế để lớn hơn độ trễ tối đa của kênh truyền (Ncp​≥Lch​−1)
 
 # Trong mô hình OFDM của mô phỏng, sau FFT, mỗi subcarrier tuân theo: Y(k)=H(k)X(k)+W(k). Có 3 trường hợp 
 	- (A) Có LMMSE: Giảm nhiễu khi kênh suy hao sâu, BER/SER tốt nhất trong 3 trường hợp
 	- (B) Có ZF (Zero Forcing): X^_ZF​(k) = H(k)/Y(k)​ Khử méo kênh hoàn toàn. Khi H(k) nhỏ -> Khuếch đại nhiễu
 	- (C) Không có bộ lọc (No Equazition): Symbol bị méo cả biên độ + pha do kênh -> BER/SER rất tệ, đặc biệt với Rayleigh
 		Nghĩa là Sau FFT, đưa thẳng Y(k) vào bộ giải điều chế QAM, không chia cho H(k), không bù kênh
+
+2. Công thức tổng quát cho IDFT 
+- Nếu X(k) là kết quả của biến đổi DFT, thì IDFT của nó x(n) được tính như sau: 
+	x(n)= 1/N * ​k=0∑N−1 ​X(k) * eiN2πkn​
+	- x(n): Tín hiệu trong miền thời gian (rời rạc)
+	- X(k): Tín hiệu trong miền tần số (sau khi đã biến đổi DFT) 
+	- N: Tổng số mẫu (samples) 
+	- e: Hệ số Euler, cơ số logarit tự nhiên
+	- 1/N: Hệ số chuẩn hóa để đưa biên độ tín hiệu về đúng giá trị ban đầu sau khi biến đổi ngược
+
+===================================================================================================================================
+#### MODULATION 
+- Là quá trình ánh xạ dữ liệu số bit thành tín hiệu có thể truyền trên kênh
+- Trong mô phỏng có 2 tầng khi điều chế: 
+	1. Điều chế số 64-QAM (baseband): Bit -> Symbol phức QAM (I + jQ)
+		- Điều chế 64-QAM: Gom 6-bit thành 1 symbol, dùng ánh xạ Gray để chọn 1 điểm trên chòm sao 64-QAM, biểu diễn dưới dạng số phức I + jQ. 
+		- Em chuẩn hóa công suất trung bình của 1 symbol bằng 1 để dễ quy đối SNR
+	2. Điều chế OFDM: Symbol trên các Subcarrier -> IFFT -> Tín hiệu thời gian (Có CP) 
+	- Vì có symbol trên từng Subcarrier X[k] -> Với luồng bit đó thì phải dùng IFFT để tạo lại tín hiệu sang miền thời gian 
+	- Thêm CP để mỗi khi qua kênh đa đường (tích chập), nếu Ncp​≥Lch​−1 thì sau FFT ta có dạng đẹp: Y[k]=H[k]X[k]+W[k]
+
+#### KÊNH RAYLEIGH ĐA ĐƯỜNG (Rayleigh Fading Channel)
+- Là một mô hình truyền sóng vô tuyến mà mô tả sự biến đổi ngẫu nhiên (suy hao) của tín hiệu do hiên tượng đa đường gây ra trong môi trường truyền dẫn không dây, làm cho tín hiệu nhận được có biên độ tuân theo phân phối Rayleigh
+- Sóng thực tế sau khi điều chế và phát ra ngoài không đi theo 1 đường thẳng mà bị phản xạ, tán xạ, nhiễu xạ -> Tín hiệu đến máy thu là tổng của nhiều tia đi theo nhiều đường khác nhau 
+- Vì thế, nó không có đường truyền trực tiếp (LOS - Line Of Sight) và Biên độ tín hiệu là tổng của nhiều thành phần Gaussian ngẫu nhiên 
+- Kênh truyền này gây ra: 
+	- Biến đổi biên độ (có lúc tín hiệu mạnh, có lúc gần như mất hẳn)
+	- Biến đổi pha (Symbol bị xoay trên mặt phẳng phức giải điều chế QAM sai nếu không bù pha)
+	- Gây ra méo nhân, khác hoàn toàn với nhiễu AWGN (méo cộng)
+- Mô hình toán học của Rayleigh: 
+	- Tín hiệu thu: y=hx+n (x - tín hiệu phát (symbol), h - đáp ứng xung của kênh Rayleigh (số phức), n - nhiễu AGWN) 
+	- Đặc điểm của h: đây là hệ số kênh (số phức), vì kênh không chỉ làm yếu tín hiệu mà còn làm xoay pha, làm méo chòm sao -> h = 	h_i + jh_q
+		- trong đó: h_i là phần thực (ảnh hưởng biên độ theo trục i), h_q là phần ảo (ảnh hưởng biên độ theo trục Q) -> Cả 2 thành phần này đều là số ngẫu nhiên Gaussian 
+	- Thế nên biên độ của tín hiệu sẽ được biểu diễn: |h| = sqrt(hI2​+hQ2​)
+
+	- Nhưng trong thực tế, có nhiều đường truyền khác nhau (đa đường), mỗi đường có độ trễ, suy hao khác nhau, pha khác nhau, vì thế kênh không còn là một số h mà là một tập các hệ số h=[h0​,h1​,…,hL−1​]
+
+- Tín hiệu thu trong miền thời gian: Do tín hiệu không đến cùng lúc nên mỗi mẫu thu tại thời điểm là TỔNG của nhiều mẫu trước đó, mỗi mẫu NHÂN với 1 tap kênh , rồi CỘNG với nhiễu: y[n]=l=0∑L−1​hl​x[n−l]+w[n]
+	- Đây chính là tích chập tuyến tính giữa tín hiệu và kênh trong miền thời gian 
+	- Khi dùng OFDM + CP đủ dài th: Tích chập tuyến tính trong miền thời gian trở thành phép nhân trong miền tần số
+		- Khi đó với mỗi Subcarrier k: Y(k)=H(k)X(k)+W(k) - trong đó H(k) chính là FFT đáp ứng xung của kênh
+		- Mỗi Subcarrier chịu một hệ số Rayleigh khác nhau
+
+#### CỘNG NHIỄU AGWN 
+- Em chuyển SNR từ dB sang tuyến tính. (SNR_linear)
+- Sau đó em đo công suất tín hiệu OFDM sau kênh Rayleigh trong miền thời gian. (sigPow_time)
+- Từ định nghĩa SNR, em suy ra phương sai nhiễu cần thêm. (noise_var_time)
+- Cuối cùng, em sinh nhiễu Gaussian phức có phương sai tương ứng và cộng trực tiếp vào tín hiệu
+- Nhiễu AGWN là một quá trình ngẫu nhiên Gaussian, không có biên độ cố định mà được đặc trưng bởi phương sai (đặc tính lâu dài)
+	- Để mô phỏng đúng SNR, ta phải tính phương sai nhiễu sao cho công suất nhiễu 
+
+#### DEMODULATION
+- Là quá trình ngược lại:
+	1. Giải OFDM: Bỏ CP + FFT -> Thu lại symbol trên từng Subcarrier 
+		- Reshape chuỗi thời gian thành từng OFDM symbol rxMat = reshape(rxTime, symLen, Nsym);
+		- Bỏ CP rxNoCP = rxMat(Ncp+1:end,:); và FFT để về miền tần số (rxGrid là ma trận tín hiệu thu tần số Y[k, m])
+	2. Cân bằng kênh bằng LMMSE 
+		- Thực hiện bù kênh vì kênh làm Y 
+	3. Giải QAM: Symbol phức -> Bit 
+
+===================================================================================================================================
+
+Em tạo bit ngẫu nhiên và điều chế 64-QAM (6 bit/symbol), chuẩn hoá công suất trung bình. 
+Sau đó em ánh xạ symbol lên các subcarrier và dùng IFFT để tạo OFDM symbol trong miền thời gian. 
+Em chèn cyclic prefix để triệt ISI và biến tích chập tuyến tính thành phép nhân trong miền tần số. 
+Tín hiệu đi qua kênh Rayleigh đa đường quasi-static bằng phép tích chập, rồi cộng nhiễu AWGN theo công suất tín hiệu để đảm bảo SNR đúng. 
+Ở máy thu, em bỏ CP, FFT về miền tần số và tính đáp ứng kênh H(k) từ đáp ứng xung h. 
+Sau đó em cân bằng theo LMMSE (hoặc ZF hoặc không cân bằng), giải điều chế QAM để thu bit và tính BER/SER. 
+Em quét SNR và dùng Monte-Carlo để lấy trung bình nhằm giảm sai số thống kê.

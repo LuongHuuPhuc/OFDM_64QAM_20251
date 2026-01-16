@@ -14,14 +14,16 @@
 %   - ser: Ti le loi ky ty (SER = So symbol sai / Tong so symbol) [0,1]
 
 function [ber, ser] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
-
+    % Moi symbol mang k bit (64-QAM) (k = 6)
+    % Tuc la cu 6bit se tao 1 symbol phuc s = I + jQ
     k = log2(cfg.M);
 
     %% ===== SINH BIT =====
-    nBits = cfg.Nused * cfg.Nsym * k;
+    nBits = cfg.Nused * cfg.Nsym * k; % 200 symbol/frame, 256 subcarrier -> 307200 bits
     txBits = randi([0 1], nBits, 1);
 
     %% ===== ĐIỀU CHẾ 64-QAM =====
+    % UnitAveragePower = true -> Chuan hoa cong suat trung binh cua symbol = 1
     txSym = qammod(txBits, cfg.M, 'InputType','bit','UnitAveragePower',true);
     txGrid = reshape(txSym, cfg.Nused, cfg.Nsym);
 
@@ -29,13 +31,15 @@ function [ber, ser] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
     txTime = ofdm_modulate(txGrid, cfg.Nfft, cfg.Ncp, cfg.Nused);
 
     %% ===== KÊNH RAYLEIGH ĐA ĐƯỜNG (QUASI-STATIC, STREAM) =====
+    % rxTime_noNoise la tin hieu sau kenh Rayleigh, chua co nhieu
     [rxTime_noNoise, h] = rayleigh_multipath_channel(txTime, cfg.Lch);
 
     %% ===== TÍNH NHIỄU AWGN THEO CÔNG SUẤT THỰC TẾ MIỀN THỜI GIAN =====
-    SNR_linear = 10^(SNRdB/10);
-    sigPow_time = mean(abs(rxTime_noNoise).^2);           % công suất tín hiệu time
-    noise_var_time = sigPow_time / SNR_linear;            % phương sai nhiễu time
+    SNR_linear = 10^(SNRdB/10); % Chuyen SNR sang dB tuyen tinh
+    sigPow_time = mean(abs(rxTime_noNoise).^2);  % Cong suat tin hieu thuc te trong mien thoi gian
+    noise_var_time = sigPow_time / SNR_linear;   % phương sai nhiễu AGWN (do manh-yeu cua nhieu) trong mien thoi gian
 
+    % Phai chu dong tao nhieu
     rxTime = add_awgn(rxTime_noNoise, noise_var_time);
 
     %% ===== OFDM THU =====
