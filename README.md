@@ -45,5 +45,12 @@ QAM Demodulation
 BER / SER
 
 ```
+
+![Block Diagram](/Images/BlockDiagram.png)
+
+## Kết quả mô phỏng 
+
+![Sim Result](/Images/SimResult.png)
+
 #### Note: Nhiễu trắng (AWGN - Additive White Gaussian Noise) 
 
