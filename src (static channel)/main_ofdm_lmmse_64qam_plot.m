@@ -6,7 +6,7 @@
 
 function main_ofdm_lmmse_64qam_plot()
     clc; close all;
-    
+
     %% ================= CẤU HÌNH MÔ PHỎNG =================
     cfg.Nfft      = 256;      % Số điểm FFT (số subcarrier) (Dvi: mau)
     cfg.Ncp       = 64;       % Độ dài Cyclic Prefix (Dvi: mau)
@@ -52,7 +52,7 @@ function main_ofdm_lmmse_64qam_plot()
 
      % ----------------KHONG DUNG LMMSE CÂN BẰNG ---------------
     cfg.eqType = 'NONE';  % 'LMMSE' | 'ZF' | 'NONE'
-    
+
     for i = 1:length(cfg.SNRdB_vec)
         SNRdB = cfg.SNRdB_vec(i);
         ber_sum = 0;
