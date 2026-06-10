@@ -8,14 +8,14 @@ function main_ofdm_lmmse_64qam_plot()
     clc; close all;
 
     %% ================= CẤU HÌNH MÔ PHỎNG =================
-    cfg.Nfft      = 256;      % Số điểm FFT (số subcarrier) (Dvi: mau)
+    cfg.Nfft      = 256;      % Số điểm FFT (số subcarrier) (Kích thước lưới tần số)
     cfg.Ncp       = 64;       % Độ dài Cyclic Prefix (Dvi: mau)
     cfg.Nsym      = 200;      % Số symbol OFDM trong 1 frame
     cfg.M         = 64;       % Bậc điều chế 64-QAM
     cfg.Lch       = 8;        % Số tap của kênh Rayleigh đa đường 
     cfg.SNRdB_vec = 0:2:30;   % Vector các giá trị SNR khảo sát (Dải nhiễu)
     cfg.Nframe    = 20;       % Số frame (lần lặp) Monte Carlo
-    cfg.Nused     = cfg.Nfft; % Số subcarrier mang dữ liệu
+    cfg.Nused     = 128;      % Số sóng mang con chứa dữ liệu (Nused = Nfft/2 là để chừa cho Guard Band)
     cfg.eqType    = "LMMSE";  % "LMMSE" | "ZF" | "NONE"
 
     % ===== LUU KET QUA =====
@@ -50,7 +50,7 @@ function main_ofdm_lmmse_64qam_plot()
         ser_lmmse(i) = ser_sum / cfg.Nframe;
     end
 
-     % ----------------KHONG DUNG LMMSE CÂN BẰNG ---------------
+     % ---------------- KHONG DUNG LMMSE CÂN BẰNG ---------------
     cfg.eqType = "NONE";  % "LMMSE" | "ZF" | "NONE"
 
     for i = 1:length(cfg.SNRdB_vec)
@@ -70,13 +70,14 @@ function main_ofdm_lmmse_64qam_plot()
 
     %% ================= VẼ BIỂU ĐỒ =================
 
-    %% ----------------- FIGURE 1: LMMSE (BER & SER) ----------------
+    %% ----------------- FIGURE 1: LMMSE ONLY (BER & SER) ----------------
     figure(Name="LMMSE Only");
     grid on;
 
     semilogy(cfg.SNRdB_vec, ber_lmmse, 'o-', 'LineWidth', 1.8);
     hold on; 
     semilogy(cfg.SNRdB_vec, ser_lmmse, 's-', 'LineWidth', 1.8);
+    grid on;
     
     ylim([1e-3 1]);
     xlabel('SNR (dB)');
@@ -89,15 +90,13 @@ function main_ofdm_lmmse_64qam_plot()
     grid on;
 
     % BER 
-    semilogy(cfg.SNRdB_vec, ber_none, 'o--', 'LineWidth', 1.8);
-    hold on;
+    semilogy(cfg.SNRdB_vec, ber_none, 'o--', 'LineWidth', 1.8); hold on;
     semilogy(cfg.SNRdB_vec, ber_lmmse, 'o-',  'LineWidth', 1.8);
-    hold on;
     
     % SER
     semilogy(cfg.SNRdB_vec, ser_none, 's--',  'LineWidth', 1.8);
-    hold on;
     semilogy(cfg.SNRdB_vec, ser_lmmse, 's-',  'LineWidth', 1.8);
+    grid on;
 
     ylim([1e-3 1]);
     xlabel('SNR (dB)');
@@ -109,3 +108,5 @@ function main_ofdm_lmmse_64qam_plot()
            'SER - LMMSE', ...
            'Location','southwest');
 end                                             
+
+% 
