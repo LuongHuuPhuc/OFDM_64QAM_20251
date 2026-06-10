@@ -11,7 +11,7 @@
 %   - rxGrid: Ma trận tín hiệu thu miền tần số kích thước (Nused x Nsym) 
 %   - Hk: Đáp ứng kênh theo từng Subcarrier kích thước (Nused x Nsym)
 %         Do kênh quasi-static -> Giống nhau cho mọi symbol
-function [rxGrid, Hk] = ofdm_demodulate(rxTime, h, Nfft, Ncp, Nused)
+function [rxGrid, Hk] = ofdm_rx(rxTime, h, Nfft, Ncp, Nused)
     symLen = Nfft + Ncp;
     Nsym = length(rxTime) / symLen;
     rxMat = reshape(rxTime, symLen, Nsym);

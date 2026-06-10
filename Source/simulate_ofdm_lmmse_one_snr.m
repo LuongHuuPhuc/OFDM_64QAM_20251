@@ -19,7 +19,9 @@ function [ber, ser] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
     k = log2(cfg.M);
 
     %% ===== SINH BIT NGẪU NHIÊN =====
-    nBits = cfg.Nused * cfg.Nsym * k; % 200 symbol/frame, 256 subcarrier -> 307200 bits
+    % 1 OFDM co 128 subcarrier -> 128 x 6 = 768 bits
+    % 1 frame co 200 OFDM -> 200 x 128 x 6 = 153600 bits
+    nBits = cfg.Nused * cfg.Nsym * k;
     txBits = randi([0 1], nBits, 1);
 
     %% ===== ĐIỀU CHẾ 64-QAM =====
@@ -28,13 +30,17 @@ function [ber, ser] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
     txGrid = reshape(txSym, cfg.Nused, cfg.Nsym);
 
     %% ===== OFDM PHÁT =====
-    txTime = ofdm_modulate(txGrid, cfg.Nfft, cfg.Ncp, cfg.Nused);
+    txTime = ofdm_tx(txGrid, cfg.Nfft, cfg.Ncp, cfg.Nused);
 
-    %% ===== KÊNH RAYLEIGH ĐA ĐƯỜNG (QUASI-STATIC, STREAM) =====
+    %% ===== CHO QUA KÊNH RAYLEIGH ĐA ĐƯỜNG (QUASI-STATIC, STREAM) =====
     % rxTime_noNoise la tin hieu sau kenh Rayleigh, chua co nhieu
     [rxTime_noNoise, h] = rayleigh_multipath_channel(txTime, cfg.Lch);
 
     %% ===== TÍNH NHIỄU AWGN THEO CÔNG SUẤT THỰC TẾ MIỀN THỜI GIAN =====
+    % Sau khi cho qua kenh truyen Rayleigh thi moi chi mo phong suy hao
+    % bien do, lech pha, da duong nhung thuc te con co nhieu tu moi truong
+    % nen can them nhieu AGWN -> y = hx + n (h la kenh Rayleigh, n la nhieu Gauss)
+
     SNR_linear = 10^(SNRdB/10); % Chuyen SNR sang dB tuyen tinh
     sigPow_time = mean(abs(rxTime_noNoise).^2);  % Cong suat tin hieu thuc te trong mien thoi gian
     noise_var_time = sigPow_time / SNR_linear;   % phương sai nhiễu AGWN (do manh-yeu cua nhieu) trong mien thoi gian
@@ -44,13 +50,14 @@ function [ber, ser] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
 
     %% ===== OFDM THU =====
     % (tính Hk từ h)
-    [rxGrid, Hk] = ofdm_demodulate(rxTime, h, cfg.Nfft, cfg.Ncp, cfg.Nused);
+    [rxGrid, Hk] = ofdm_rx(rxTime, h, cfg.Nfft, cfg.Ncp, cfg.Nused);
 
     %% ===== PHUONG SAI NHIEU MIEN TAN SO =====
     % Sau normalize FFT/IFFT doi xung, phuong sai nhieu tan so = phuong sai thoi gian 
     noise_var_freq = noise_var_time;
 
     %% ===== CÂN BẰNG LMMSE =====
+    % LMMSE được dùng ngay sau thu tín hiệu và FFT xong, trước khi giải điều chế 
     switch cfg.eqType
         case "LMMSE"
             xHat = lmmse_equalize(rxGrid, Hk, noise_var_freq);
@@ -64,12 +71,12 @@ function [ber, ser] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
 
     %% ===== GIẢI ĐIỀU CHẾ =====
     rxBits = qamdemod(xHat(:), cfg.M, 'OutputType','bit','UnitAveragePower',true);
+    rxSym = qamdemod(xHat(:), cfg.M, 'OutputType', 'integer', 'UnitAveragePower', true);
+    txSym_int = qamdemod(txSym, cfg.M, 'OutputType','integer','UnitAveragePower',true);
 
     % Tinh BER
     ber = mean(rxBits ~= txBits);
 
     % Tinh SER (So sanh truc tiep symbol thu voi symbol phat)
-    rxSym = qamdemod(xHat(:), cfg.M, 'OutputType', 'integer', 'UnitAveragePower', true);
-    txSym_int = qamdemod(txSym, cfg.M, 'OutputType','integer','UnitAveragePower',true);
     ser = mean(rxSym ~= txSym_int);
 end

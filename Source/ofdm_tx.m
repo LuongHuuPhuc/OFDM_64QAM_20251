@@ -13,7 +13,7 @@
 %   - Nused: So Subcarrier thuc su mang du lieu
 % Output: 
 %   - txTime: Chuoi tin hieu OFDM mien thoi gian san sang dua qua kenh truyen
-function txTime = ofdm_modulate(txGrid, Nfft, Ncp, Nused)
+function txTime = ofdm_tx(txGrid, Nfft, Ncp, Nused)
 
     % txGrid: dữ liệu miền tần số [subcarrier x symbol]
     Nsym = size(txGrid, 2);

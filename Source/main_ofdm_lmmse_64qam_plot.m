@@ -1,22 +1,27 @@
 % Vai tro:
 % - La entry point cua chuong trinh
 % - Quet SNR tu thap den cao 
-% - Chay Monte Carlo de giam sai so thong ke 
+% - Chay Monte Carlo de giam SAI SO THONG KE
 % - Ve do thi BER/SER 
 
 function main_ofdm_lmmse_64qam_plot()
     clc; close all;
 
-    %% ================= CẤU HÌNH MÔ PHỎNG =================
-    cfg.Nfft      = 256;      % Số điểm FFT (số subcarrier) (Kích thước lưới tần số)
-    cfg.Ncp       = 64;       % Độ dài Cyclic Prefix (Dvi: mau)
-    cfg.Nsym      = 200;      % Số symbol OFDM trong 1 frame
-    cfg.M         = 64;       % Bậc điều chế 64-QAM
-    cfg.Lch       = 8;        % Số tap của kênh Rayleigh đa đường 
+    %% ================= CAU HINH MO PHONG =================
+    cfg.Nfft = 256;      % Số điểm FFT (số subcarrier) (Kích thước lưới tần số)
+    cfg.Ncp = 64;        % Độ dài Cyclic Prefix (Gan vao truoc OFDM symbol de triet tieu nhieu)
+    cfg.Nsym = 200;      % Số OFDM symbol gui di trong 1 frame (tuong duong 1 lan lap)
+    cfg.M = 64;          % Bậc điều chế 64-QAM
+    cfg.Lch = 8;         % Số tap của kênh Rayleigh đa đường 
     cfg.SNRdB_vec = 0:2:30;   % Vector các giá trị SNR khảo sát (Dải nhiễu)
-    cfg.Nframe    = 20;       % Số frame (lần lặp) Monte Carlo
-    cfg.Nused     = 128;      % Số sóng mang con chứa dữ liệu (Nused = Nfft/2 là để chừa cho Guard Band)
-    cfg.eqType    = "LMMSE";  % "LMMSE" | "ZF" | "NONE"
+    cfg.Nframe = 100;          % Số lan chay Monte Carlo (tuong duong so frame)
+    cfg.Nused = 128;       % Số sóng mang con chứa dữ liệu (Nused = Nfft/2 là để chừa cho Guard Band)
+    cfg.eqType = "LMMSE";  % "LMMSE" | "ZF" | "NONE"
+
+    % 1 OFDM symbol (Nsym) co 128 subcarrier, moi subcarrier mang 1 symbol 64-QAM 
+    % -> 1 OFDM symbol = 128 QAM symbols
+    % 1 frame co 200 OFDM symbol, moi OFDM chua 128 subcarrier
+    % -> 25600 subcarrier/frame, moi subcarrier xuat hien 200 lan -> 25600 QAM symbols
 
     % ===== LUU KET QUA =====
     ber_lmmse = zeros(size(cfg.SNRdB_vec));
@@ -24,13 +29,7 @@ function main_ofdm_lmmse_64qam_plot()
     ber_none = zeros(size(cfg.SNRdB_vec));
     ser_none = zeros(size(cfg.SNRdB_vec));
     
-    %% ===== TEST NHANH =====
-    cfg.eqType = "LMMSE";
-    [ber_test, ser_test] = simulate_ofdm_lmmse_one_snr(30, cfg);
-    fprintf("BER (LMMSE, 30dB): %.3e\n", ber_test);
-    fprintf("SER (LMMSE, 30dB): %.3e\n", ser_test);
-           
-    %% ================= VÒNG LẶP THEO SNR =================
+    %% ================= VONG LAP THEO TUNG SNR =================
 
     % ----------------Dùng LMMSE ---------------
     cfg.eqType = "LMMSE";  % "LMMSE" | "ZF" | "NONE"
@@ -46,6 +45,7 @@ function main_ofdm_lmmse_64qam_plot()
             ser_sum = ser_sum + ser1;
         end
 
+        % Chia lai cho so frame de tinh theo Monte Carlo
         ber_lmmse(i) = ber_sum / cfg.Nframe;
         ser_lmmse(i) = ser_sum / cfg.Nframe;
     end
@@ -63,29 +63,13 @@ function main_ofdm_lmmse_64qam_plot()
             ber_sum = ber_sum + ber1;
             ser_sum = ser_sum + ser1;
         end
-    
+
+        % Chia lai cho so frame de tinh theo Monte Carlo
         ber_none(i) = ber_sum / cfg.Nframe;
         ser_none(i) = ser_sum / cfg.Nframe;
     end
 
-    %% ================= VẼ BIỂU ĐỒ =================
-
-    %% ----------------- FIGURE 1: LMMSE ONLY (BER & SER) ----------------
-    figure(Name="LMMSE Only");
-    grid on;
-
-    semilogy(cfg.SNRdB_vec, ber_lmmse, 'o-', 'LineWidth', 1.8);
-    hold on; 
-    semilogy(cfg.SNRdB_vec, ser_lmmse, 's-', 'LineWidth', 1.8);
-    grid on;
-    
-    ylim([1e-3 1]);
-    xlabel('SNR (dB)');
-    ylabel('Tỉ lệ lỗi');
-    title('OFDM + Rayleigh + AWGN + LMMSE (64-QAM)');
-    legend('BER','SER', 'Location','southwest');
-
-    %% ----------------- FIGURE 2: SO SANH LMMSE & NONE (BER & SER) ----------------
+    %% ----------------- VE BIEU DO SO SANH LMMSE & NONE ----------------
     figure(Name="BER & SER comparison");
     grid on;
 
@@ -108,5 +92,3 @@ function main_ofdm_lmmse_64qam_plot()
            'SER - LMMSE', ...
            'Location','southwest');
 end                                             
-
-% 
