@@ -6,7 +6,7 @@
 
 function main_ofdm_lmmse_64qam_plot()
     clc; close all;
-
+    
     %% ================= CẤU HÌNH MÔ PHỎNG =================
     cfg.Nfft      = 256;      % Số điểm FFT (số subcarrier) (Dvi: mau)
     cfg.Ncp       = 64;       % Độ dài Cyclic Prefix (Dvi: mau)
@@ -16,7 +16,7 @@ function main_ofdm_lmmse_64qam_plot()
     cfg.SNRdB_vec = 0:2:30;   % Vector các giá trị SNR khảo sát (Dải nhiễu)
     cfg.Nframe    = 20;       % Số frame (lần lặp) Monte Carlo
     cfg.Nused     = cfg.Nfft; % Số subcarrier mang dữ liệu
-    cfg.eqType    = "LMMSE";  % "LMMSE" | "ZF" | "NONE"
+    cfg.eqType    = 'LMMSE';  % 'LMMSE' | 'ZF' | 'NONE'
 
     % ===== LUU KET QUA =====
     ber_lmmse = zeros(size(cfg.SNRdB_vec));
@@ -25,15 +25,15 @@ function main_ofdm_lmmse_64qam_plot()
     ser_none = zeros(size(cfg.SNRdB_vec));
     
     %% ===== TEST NHANH =====
-    cfg.eqType = "LMMSE";
+    cfg.eqType = 'LMMSE';
     [ber_test, ser_test] = simulate_ofdm_lmmse_one_snr(30, cfg);
-    fprintf("BER (LMMSE, 30dB): %.3e\n", ber_test);
-    fprintf("SER (LMMSE, 30dB): %.3e\n", ser_test);
+    fprintf('BER (LMMSE, 30dB): %.3e\n', ber_test);
+    fprintf('SER (LMMSE, 30dB): %.3e\n', ser_test);
            
     %% ================= VÒNG LẶP THEO SNR =================
 
     % ----------------Dùng LMMSE ---------------
-    cfg.eqType = "LMMSE";  % "LMMSE" | "ZF" | "NONE"
+    cfg.eqType = 'LMMSE';  % 'LMMSE' | 'ZF' | 'NONE'
 
     for i = 1:length(cfg.SNRdB_vec)
         SNRdB = cfg.SNRdB_vec(i);
@@ -51,8 +51,8 @@ function main_ofdm_lmmse_64qam_plot()
     end
 
      % ----------------KHONG DUNG LMMSE CÂN BẰNG ---------------
-    cfg.eqType = "NONE";  % "LMMSE" | "ZF" | "NONE"
-
+    cfg.eqType = 'NONE';  % 'LMMSE' | 'ZF' | 'NONE'
+    
     for i = 1:length(cfg.SNRdB_vec)
         SNRdB = cfg.SNRdB_vec(i);
         ber_sum = 0;
@@ -71,7 +71,7 @@ function main_ofdm_lmmse_64qam_plot()
     %% ================= VẼ BIỂU ĐỒ =================
 
     %% ----------------- FIGURE 1: LMMSE (BER & SER) ----------------
-    figure(Name="LMMSE Only");
+    figure('Name', 'LMMSE Only');
     grid on;
 
     semilogy(cfg.SNRdB_vec, ber_lmmse, 'o-', 'LineWidth', 1.8);
@@ -85,7 +85,7 @@ function main_ofdm_lmmse_64qam_plot()
     legend('BER','SER', 'Location','southwest');
 
     %% ----------------- FIGURE 2: SO SANH LMMSE & NONE (BER & SER) ----------------
-    figure(Name="BER & SER comparison");
+    figure('Name', 'BER & SER comparison');
     grid on;
 
     % BER 

@@ -24,7 +24,7 @@ function [ber, ser] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
 
     %% ===== ĐIỀU CHẾ 64-QAM =====
     % UnitAveragePower = true -> Chuan hoa cong suat trung binh cua symbol = 1
-    txSym = qammod(txBits, cfg.M, 'InputType','bit','UnitAveragePower',true);
+    txSym = custom_qammod(txBits, cfg.M);
     txGrid = reshape(txSym, cfg.Nused, cfg.Nsym);
 
     %% ===== OFDM PHÁT =====
@@ -51,21 +51,21 @@ function [ber, ser] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
 
     %% ===== CÂN BẰNG LMMSE =====
     switch cfg.eqType
-        case "LMMSE"
+        case 'LMMSE'
             xHat = lmmse_equalize(rxGrid, Hk, noise_var_freq);
-        case "ZF"
+        case 'ZF'
             xHat = rxGrid ./ Hk;
-        case "NONE"
+        case 'NONE'
             % Gia thiet may thu khong co bo can bang kenh, nen dua truc
             % tiep tin hieu thu duoc sau FFT vao bo giai dieu che
             xHat = rxGrid;   % không cân bằng
     end
 
     %% ===== GIẢI ĐIỀU CHẾ =====
-    rxBits = qamdemod(xHat(:), cfg.M, 'OutputType','bit','UnitAveragePower',true);
+    rxBits = custom_qamdemod(xHat(:), cfg.M);
 
     ber = mean(rxBits ~= txBits);
 
-    rxSym_hat = qammod(rxBits, cfg.M, 'InputType','bit','UnitAveragePower',true);
+    rxSym_hat = custom_qammod(rxBits, cfg.M);
     ser = mean(rxSym_hat ~= txSym);
 end
