@@ -1,7 +1,7 @@
 % Vai tro:
 % - La entry point cua chuong trinh
 % - Quet SNR tu thap den cao 
-% - Chay Monte Carlo de giam SAI SO THONG KE
+% - Chay Monte Carlo giam SAI SO THONG KE de uoc luong BER/SER
 % - Ve do thi BER/SER 
 
 function main_ofdm_lmmse_64qam_plot()
@@ -13,8 +13,8 @@ function main_ofdm_lmmse_64qam_plot()
     cfg.Nsym = 200;      % Số OFDM symbol gui di trong 1 frame (tuong duong 1 lan lap)
     cfg.M = 64;          % Bậc điều chế 64-QAM
     cfg.Lch = 8;         % Số tap của kênh Rayleigh đa đường 
-    cfg.SNRdB_vec = 0:2:30;   % Vector các giá trị SNR khảo sát (Dải nhiễu)
-    cfg.Nframe = 100;          % Số lan chay Monte Carlo (tuong duong so frame)
+    cfg.SNRdB_vec = 0:2:30;    % Vector các giá trị SNR khảo sát (Dải nhiễu)
+    cfg.Nframe = 100;          % Số lan chay Monte Carlo de tim xac suat loi (tuong duong so frame)
     cfg.Nused = 128;       % Số sóng mang con chứa dữ liệu (Nused = Nfft/2 là để chừa cho Guard Band)
     cfg.eqType = "LMMSE";  % "LMMSE" | "ZF" | "NONE"
 
@@ -39,6 +39,7 @@ function main_ofdm_lmmse_64qam_plot()
         ber_sum = 0;
         ser_sum = 0;
 
+        % Chay Monte Carlo (lap di lap lai) de uoc luong xac suat BER/SER
         for k = 1:cfg.Nframe
             [ber1, ser1] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg);
             ber_sum = ber_sum + ber1;
@@ -58,6 +59,7 @@ function main_ofdm_lmmse_64qam_plot()
         ber_sum = 0;
         ser_sum = 0;
     
+        % Chay Monte Carlo (lap di lap lai) de uoc luong xac suat BER/SER
         for k = 1:cfg.Nframe
             [ber1, ser1] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg);
             ber_sum = ber_sum + ber1;
