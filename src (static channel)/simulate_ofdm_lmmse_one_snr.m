@@ -4,16 +4,18 @@
 % Y nghia: 
 %   Tach ra rieng de:
 %   - De lap Monte Carlo va lay trung binh phan phoi cua ket qua
-%   - De thay Equalizer (ZF ↔ LMMSE ↔ MMSE)
+%   - De thay Equalizer (ZF <=> LMMSE <=> MMSE)
 % Input: 
 %   - SNRdB (scalar): Ti so tin hieu tren nhieu (dB) de xac dinh cong suat
 %   nhieu AWGN 
 %   - cfg (struct cau hinh): Chua toan bo tham so he thong OFDM 
 % Output: 
-%   - ber: Ti le loi bit (BER = So bit sai / Tong so bit) [0,1]
-%   - ser: Ti le loi ky ty (SER = So symbol sai / Tong so symbol) [0,1]
+%   - ber    : Ti le loi bit (BER = So bit sai / Tong so bit) [0,1]
+%   - ser    : Ti le loi ky ty (SER = So symbol sai / Tong so symbol) [0,1]
+%   - Y_out  : (optional) Tin hieu mien tan so TRUOC can bang [Nused x Nsym]
+%   - Xhat_out: (optional) Uoc luong symbol SAU can bang LMMSE [Nused x Nsym]
 
-function [ber, ser] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
+function [ber, ser, Y_out, Xhat_out] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
     % Moi symbol mang k bit (64-QAM) (k = 6)
     % Tuc la cu 6bit se tao 1 symbol phuc s = I + jQ
     k = log2(cfg.M);
@@ -28,7 +30,7 @@ function [ber, ser] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
     txGrid = reshape(txSym, cfg.Nused, cfg.Nsym);
 
     %% ===== OFDM PHÁT =====
-    txTime = ofdm_modulate(txGrid, cfg.Nfft, cfg.Ncp, cfg.Nused);
+    txTime = ofdm_tx(txGrid, cfg.Nfft, cfg.Ncp, cfg.Nused);
 
     %% ===== KÊNH RAYLEIGH ĐA ĐƯỜNG (QUASI-STATIC, STREAM) =====
     % rxTime_noNoise la tin hieu sau kenh Rayleigh, chua co nhieu
@@ -44,7 +46,7 @@ function [ber, ser] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
 
     %% ===== OFDM THU =====
     % (tính Hk từ h)
-    [rxGrid, Hk] = ofdm_demodulate(rxTime, h, cfg.Nfft, cfg.Ncp, cfg.Nused);
+    [rxGrid, Hk] = ofdm_rx(rxTime, h, cfg.Nfft, cfg.Ncp, cfg.Nused);
 
     %% ===== N0 DÙNG CHO LMMSE Ở MIỀN TẦN SỐ =====
     noise_var_freq = noise_var_time * cfg.Nfft;
@@ -60,6 +62,13 @@ function [ber, ser] = simulate_ofdm_lmmse_one_snr(SNRdB, cfg)
             % tiep tin hieu thu duoc sau FFT vao bo giai dieu che
             xHat = rxGrid;   % không cân bằng
     end
+
+    %% ===== GAN GIA TRI OUTPUT TUY CHON (cho constellation plot) =====
+    % Y_out   : tin hieu mien tan so TRUOC can bang (rxGrid)
+    % Xhat_out: uoc luong symbol SAU can bang (xHat)
+    % GNU Octave tu dong bo qua neu nguoi goi chi yeu cau [ber, ser]
+    Y_out    = rxGrid;
+    Xhat_out = xHat;
 
     %% ===== GIẢI ĐIỀU CHẾ =====
     rxBits = custom_qamdemod(xHat(:), cfg.M);
