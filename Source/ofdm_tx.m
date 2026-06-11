@@ -13,18 +13,22 @@
 %   - Nused: So Subcarrier thuc su mang du lieu
 % Output: 
 %   - txTime: Chuoi tin hieu OFDM mien thoi gian san sang dua qua kenh truyen
-
-function txTime = ofdm_modulate(txGrid, Nfft, Ncp, Nused)
+function txTime = ofdm_tx(txGrid, Nfft, Ncp, Nused)
 
     % txGrid: dữ liệu miền tần số [subcarrier x symbol]
     Nsym = size(txGrid, 2);
 
     % Ánh xạ dữ liệu vào FFT bin
     X = zeros(Nfft, Nsym);
-    X(1:Nused,:) = txGrid;
+
+    % Anh xa vao cac Subcarrier giua (bo DC bin, can doi 2 ben)
+    % Dung Nused subcarrier doi xung quanh DC de tranh nhieu DC
+    half = Nused / 2;
+    X(2:half+1, :) = txGrid(1:half, :); % Lower half
+    X(Nfft-half+1:Nfft, :) = txGrid(half+1:Nused, :); % Upper half
 
     % IFFT
-    x = ifft(X, Nfft, 1);
+    x = ifft(X, Nfft, 1) * sqrt(Nfft); % Normalize IFFT
 
     % Thêm Cyclic Prefix
     x_cp = [x(end-Ncp+1:end,:); x];
