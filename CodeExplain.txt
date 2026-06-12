@@ -1,31 +1,44 @@
 GIẢI THÍCH CHƯƠNG TRÌNH MÔ PHỎNG HỆ THỐNG OFDM - Ghép Kênh Phân Chia Tần Số Trực Giao 
-SỬ DỤNG BỘ LỌC LMMSE TRÊN KÊNH TRUYỀN RAYLEIGH NHIỄU TRẮNG, ĐIỀU CHẾ 64 QAM
-ĐÁNH GIÁ CHẤT LƯỢNG BER/SER
-- OFDM là kỹ thuật điều chế đa sóng mang (Carrier Wave), chia luồng dữ liệu tốc độ cao thành nhiều luồng nhỏ hơn
+SỬ DỤNG BỘ LỌC LMMSE TRÊN KÊNH TRUYỀN RAYLEIGH NHIỄU TRẮNG, ĐIỀU CHẾ 64-QAM, ĐÁNH GIÁ CHẤT LƯỢNG BER/SER
+
+- OFDM là kỹ thuật ghép kênh sử dụng điều chế QAM đa sóng mang (Carrier Wave), chia luồng dữ liệu tốc độ cao thành nhiều luồng nhỏ hơn
 truyền đồng thời trên nhiều sóng mang con tần số gần nhau nhưng trực giao (không giao thoa) để tăng tốc độ truyền và hiệu quả
 truyền dữ liệu, được ứng dụng rộng rãi trong WiFi, 4G, 5G,...
 - Nguyên lý hoạt động: 
 	- Chia kênh: Một kênh băng rộng được chia thành nhiều kênh con hẹp, mỗi kênh con truyền 1 phần dữ liệu 
-	- Trực giao: Các sóng mang con này được thiết kế sao cho chúng không gây nhiễu cho nhau, giúp tiết kiệm băng thông
+	- Trực giao: Các sóng mang con này được thiết kế sao cho chúng không gây nhiễu cho nhau, giúp tiết kiệm băng thông (tích các sóng nhân với nhau bằng 0)
 	- Truyền song song: Dữ liệu được truyền đồng thời trên các sóng mang con này, mỗi sóng con có tốc độ thấp hơn, giúp tăng cường khả năng chịu lỗi và hiệu suất
 	- Giảm thiều nhiễu: Nhờ chia nhỏ sóng và truyền song song, OFDM giảm thiểu các vấn đề như fading chọn lọc và nhiễu đa đường
+
+- 1 OFDM symbol (hay khoi du lieu OFDM) nhu 1 "chiec xe tai lon" cho hang tren 1 tuyen duong, trong do chua:
+	- Cac subcarrier: song mang con, moi song mang chua 1 phan du lieu rieng biet
+	- Tinh truc giao: Cac toa xe nay duoc sap xep rat sat nhau va pho tan chong len nhau, nhung lai khong gay nhieu cho nhau.
+		khac voi FDM la cac subcarrier nay duoc cach nhau bang 1 khoang Guard Band gay lang phi bang thong
+	- Tien to vong (Cyclic Prefix - CP): la doan du lieu duoc sao cheo va them vao dau moi OFDM symbol de triet tieu hien tuong 
+		nhieu do tin hieu bi phan xa tu cac buc tuong hoac vat can (hien tuong da duong)
+
 ===================================================================================================================================
 FLOW CHUẨN 
-Bit ngẫu nhiên
+Bit ngẫu nhiên (200 OFDM symbol/frame, 1 OFDM = 128 subcarrier, 64-QAM) 
 ↓ 
-64-QAM → OFDM (IFFT + CP)
+Điều chế 64-QAM
+↓ 
+Phát OFDM (IFFT + CP)
 ↓ 
 kênh Rayleigh đa đường (quasi-static)
 ↓ 
 AWGN
 ↓ 
-thu OFDM (bỏ CP + FFT)
+Thu OFDM (bỏ CP + FFT)
 ↓  
 cân bằng LMMSE
 ↓ 
-giải điều chế
+giải điều chế QAM demod
 ↓ 
 tính BER/SER theo SNR bằng phương pháp Monte-Carlo
+
+*Monte-Carlo là phương pháp ước lượng xác suất xảy ra bằng cách thực hiện lặp đi lặp lại phép tính (hàng nghìn, hàng triệu lần)
+các kịch bản khác nhau, mỗi lần chọn 1 giá trị ngẫu nhiên cho các biến. Kết quả sẽ được cộng dồn lại rồi chia trung bình để ra kết quả dự đoán 
 
 ===================================================================================================================================
 KHÁI NIỆM - ĐỊNH NGHĨA
@@ -46,7 +59,8 @@ KHÁI NIỆM - ĐỊNH NGHĨA
 		Điều này giúp máy thu có thể sử dụng phép toán FFT để tách các sóng mang con mà không bị nhiễu lẫn nhau (tránh ISI)
 - Nhược điểm: 
 	- Lãng phí tài nguyên: Vì CP chỉ là bản sao của dữ liệu cũ, nó không mang thêm thông tin mới những vẫn tiêu tốn công suất phát và thời gian truyền dẫn.
-	- Nếu CP quá ngắn, nó không chặn được nhiễu ISI. Nếu quá dài, nó gây lãng phí băng thông. Trong 4G/5G, độ dài CP thường được thiết kế để lớn hơn độ trễ tối đa của kênh truyền (Ncp​≥Lch​−1)
+	- Nếu CP quá ngắn, nó không chặn được nhiễu ISI. Nếu quá dài, nó gây lãng phí băng thông. 
+	  Trong 4G/5G, độ dài CP thường được thiết kế để lớn hơn độ trễ tối đa của kênh truyền (Ncp​≥Lch​−1)
 
 # Trong mô hình OFDM của mô phỏng, sau FFT, mỗi subcarrier tuân theo: Y(k)=H(k)X(k)+W(k). Có 3 trường hợp 
 	- (A) Có LMMSE: Giảm nhiễu khi kênh suy hao sâu, BER/SER tốt nhất trong 3 trường hợp
@@ -74,6 +88,17 @@ KHÁI NIỆM - ĐỊNH NGHĨA
 	- Vì có symbol trên từng Subcarrier X[k] -> Với luồng bit đó thì phải dùng IFFT để tạo lại tín hiệu sang miền thời gian 
 	- Thêm CP để mỗi khi qua kênh đa đường (tích chập), nếu Ncp​≥Lch​−1 thì sau FFT ta có dạng đẹp: Y[k]=H[k]X[k]+W[k]
 
+===================================================================================================================================
+#### DEMODULATION
+- Là quá trình ngược lại:
+	1. Thu OFDM: Bỏ CP + FFT -> Thu lại symbol trên từng Subcarrier 
+		- Reshape chuỗi thời gian thành từng OFDM symbol rxMat = reshape(rxTime, symLen, Nsym);
+		- Bỏ CP rxNoCP = rxMat(Ncp+1:end,:); và FFT để về miền tần số (rxGrid là ma trận tín hiệu thu tần số Y[k, m])
+	2. Cân bằng kênh bằng LMMSE 
+		- Thực hiện bù kênh vì kênh làm Y 
+	3. Giải QAM: Symbol phức -> Bit 
+
+===================================================================================================================================
 #### KÊNH RAYLEIGH ĐA ĐƯỜNG (Rayleigh Fading Channel)
 - Là một mô hình truyền sóng vô tuyến mà mô tả sự biến đổi ngẫu nhiên (suy hao) của tín hiệu do hiên tượng đa đường gây ra trong môi trường truyền dẫn không dây, làm cho tín hiệu nhận được có biên độ tuân theo phân phối Rayleigh
 - Sóng thực tế sau khi điều chế và phát ra ngoài không đi theo 1 đường thẳng mà bị phản xạ, tán xạ, nhiễu xạ -> Tín hiệu đến máy thu là tổng của nhiều tia đi theo nhiều đường khác nhau 
@@ -96,7 +121,13 @@ KHÁI NIỆM - ĐỊNH NGHĨA
 		- Khi đó với mỗi Subcarrier k: Y(k)=H(k)X(k)+W(k) - trong đó H(k) chính là FFT đáp ứng xung của kênh
 		- Mỗi Subcarrier chịu một hệ số Rayleigh khác nhau
 
+===================================================================================================================================
 #### CỘNG NHIỄU AGWN 
+- Nhiễu AWVN có 3 đặc điểm:
+	+ Tính cộng (Additive): Nhiễu được cộng trực tiếp vào tín hiệu
+	+ Tính White: Phổ công suất của nhiễu trải đều và phẳng trên toàn bộ dải tần của hệ thống
+	+ Phân phối Gauss: Các giá trị biên độ của nhiễu tuân theo phân phối Gauss
+
 - Em chuyển SNR từ dB sang tuyến tính. (SNR_linear)
 - Sau đó em đo công suất tín hiệu OFDM sau kênh Rayleigh trong miền thời gian. (sigPow_time)
 - Từ định nghĩa SNR, em suy ra phương sai nhiễu cần thêm. (noise_var_time)
@@ -104,14 +135,22 @@ KHÁI NIỆM - ĐỊNH NGHĨA
 - Nhiễu AGWN là một quá trình ngẫu nhiên Gaussian, không có biên độ cố định mà được đặc trưng bởi phương sai (đặc tính lâu dài)
 	- Để mô phỏng đúng SNR, ta phải tính phương sai nhiễu sao cho công suất nhiễu 
 
-#### DEMODULATION
-- Là quá trình ngược lại:
-	1. Giải OFDM: Bỏ CP + FFT -> Thu lại symbol trên từng Subcarrier 
-		- Reshape chuỗi thời gian thành từng OFDM symbol rxMat = reshape(rxTime, symLen, Nsym);
-		- Bỏ CP rxNoCP = rxMat(Ncp+1:end,:); và FFT để về miền tần số (rxGrid là ma trận tín hiệu thu tần số Y[k, m])
-	2. Cân bằng kênh bằng LMMSE 
-		- Thực hiện bù kênh vì kênh làm Y 
-	3. Giải QAM: Symbol phức -> Bit 
+===================================================================================================================================
+
+#### BỘ LỌC CÂN BẰNG LMMSE 
+- Sinh ra để khắc phục lỗi của tín hiệu khi đi qua kênh truyền Rayleigh (fading phẳng hoặc đa đường) với nhiễu cao
+- Tín hiệu sẽ bị suy hao biên độ ngẫu nhiêu (deep fading) và xoay pha ngẫu nhiên theo phân bố Rayleigh
+- Nếu không có cân bằng để bù đắp pha và biên độ, dữ liệu sẽ bị biến dạng trầm trọng
+- Ngoài ra còn tác động của nhiễu cộng AWGN. Khi nhiễu tăng áp đảo tín hiệu, sẽ lỗi bit liên tục
+- Khác với bộ lọc ZF (làm phẳng kênh) - có ưu điểm loại bỏ hoàn toàn nhiễu ISI (xuyên ký tự)
+	- Hoạt động dựa trên nguyên tắc nghịch đảo ma trận kênh. Khi cường điệu độ tín hiệu kênh truyền yếu (Đáp ứng tần số gần bằng 0)
+	  việc nghịch đảo ma trận sẽ khuếch đại nhiễu trắng lên mức cao -> Khuếch đại cả noise 
+
+- Còn LMMSE (dung hòa) hoạt động theo cách nó sẽ tìm 1 bộ lọc G sao cho thỏa mãn sai số trung bình bình phương là nhỏ nhất.
+	- Nó bù pha của kênh
+	- Chấp nhận 1 lượng nhỏ ISI để đổi lấy nhiễu nền thấp hơn, thay vì cố ép về 0 như ZF.  
+	- Khi đó nếu kênh truyền yếu (h rất bé), bộ lọc sẽ không tiến tới vô cực  bằng cách cộng mẫu với tỷ số  phương sai tạp âm và phương sai tín hiệu
+	- Giúp giảm nhiễu và hạn chế khuếch đại nhiễu
 
 ===================================================================================================================================
 
@@ -122,3 +161,5 @@ Tín hiệu đi qua kênh Rayleigh đa đường quasi-static bằng phép tích
 Ở máy thu, em bỏ CP, FFT về miền tần số và tính đáp ứng kênh H(k) từ đáp ứng xung h. 
 Sau đó em cân bằng theo LMMSE (hoặc ZF hoặc không cân bằng), giải điều chế QAM để thu bit và tính BER/SER. 
 Em quét SNR và dùng Monte-Carlo để lấy trung bình nhằm giảm sai số thống kê.
+
+===================================================================================================================================
