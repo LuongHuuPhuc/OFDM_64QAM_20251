@@ -14,7 +14,7 @@ function main_ofdm_lmmse_64qam_plot()
     cfg.M = 64;          % Bậc điều chế 64-QAM
     cfg.Lch = 8;         % Số tap của kênh Rayleigh đa đường 
     cfg.SNRdB_vec = 0:2:30;    % Vector các giá trị SNR khảo sát (Dải nhiễu)
-    cfg.Nframe = 100;          % Số lan chay Monte Carlo de tim xac suat loi (tuong duong so frame)
+    cfg.Nframe = 200;          % Số lan chay Monte Carlo de tim xac suat loi (tuong duong so frame)
     cfg.Nused = 128;       % Số sóng mang con chứa dữ liệu (Nused = Nfft/2 là để chừa cho Guard Band)
     cfg.eqType = "LMMSE";  % "LMMSE" | "ZF" | "NONE"
 
